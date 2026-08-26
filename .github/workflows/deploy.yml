@@ -1,6 +1,9 @@
 name: Deploy Project3
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
