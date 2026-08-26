@@ -1,7 +1,8 @@
-# Vault and application secrets
+# Local deployment / Vault files
 .env
-vault/key
-vault/data/
+vault/
+docker-compose.yaml
+vault.sh
 
 # Python
 __pycache__/
