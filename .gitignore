@@ -1,0 +1,16 @@
+# Vault and application secrets
+.env
+vault/key
+vault/data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+venv/
+.venv/
+
+# OS / editor
+.DS_Store

@@ -1,0 +1,19 @@
+name: project3-vault
+
+services:
+  vault:
+    image: hashicorp/vault:1.17.6
+    container_name: vault-project3
+    restart: unless-stopped
+
+    ports:
+      - "8200:8200"
+
+    cap_add:
+      - IPC_LOCK
+
+    volumes:
+      - ./config.hcl:/vault/config/config.hcl
+      - ./data:/vault/data
+
+    command: server
