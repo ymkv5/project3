@@ -11,8 +11,38 @@ permissions:
 
 jobs:
 
-  security:
-    name: Security Scan
+  bandit:
+    name: Bandit
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run Bandit
+        run: |
+          rm -rf /tmp/project3-bandit
+          python3 -m venv /tmp/project3-bandit
+          /tmp/project3-bandit/bin/pip install bandit==1.9.4
+          /tmp/project3-bandit/bin/bandit -r Skills_Utilization
+
+
+  hadolint:
+    name: Hadolint
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run Hadolint
+        run: |
+          docker run --rm -i hadolint/hadolint:v2.15.1 \
+          < Skills_Utilization/Dockerfile
+
+
+  trufflehog:
+    name: TruffleHog
     runs-on: self-hosted
 
     steps:
@@ -21,27 +51,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      # -------------------------
-      # Bandit
-      # -------------------------
-      - name: Bandit Python Scan
-        run: |
-          python3 -m venv /tmp/project3-bandit
-          /tmp/project3-bandit/bin/pip install bandit==1.9.4
-          /tmp/project3-bandit/bin/bandit -r Skills_Utilization
-
-      # -------------------------
-      # Hadolint
-      # -------------------------
-      - name: Hadolint Dockerfile Scan
-        run: |
-          docker run --rm -i hadolint/hadolint:v2.15.1 \
-          < Skills_Utilization/Dockerfile
-
-      # -------------------------
-      # TruffleHog
-      # -------------------------
-      - name: TruffleHog Secret Scan
+      - name: Run TruffleHog
         uses: trufflesecurity/trufflehog@v3.97.1
         with:
           path: ./
@@ -50,7 +60,10 @@ jobs:
 
   build:
     name: Build
-    needs: security
+    needs:
+      - bandit
+      - hadolint
+      - trufflehog
     runs-on: self-hosted
 
     steps:
