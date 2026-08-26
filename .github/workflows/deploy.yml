@@ -1,13 +1,12 @@
-name: Deploy Project3
+name: Build and Deploy Project3
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
-  deploy:
+
+  build:
+    name: Build
     runs-on: self-hosted
 
     steps:
@@ -16,12 +15,24 @@ jobs:
           cd /home/aau/Desktop/project3
           git pull origin main
 
+      - name: Build Docker Image
+        run: |
+          cd /home/aau/Desktop/project3
+          docker compose build
+
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: self-hosted
+
+    steps:
       - name: Deploy with Vault
         run: |
           cd /home/aau/Desktop/project3
           ./vault.sh
 
-      - name: Check containers
+      - name: Check Containers
         run: |
           cd /home/aau/Desktop/project3
           docker compose ps

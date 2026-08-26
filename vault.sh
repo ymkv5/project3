@@ -36,4 +36,4 @@ fi
 echo "Secrets saved successfully."
 
 echo "Running Docker containers..."
-docker compose --env-file "$ENV_FILE" up -d --build
+docker compose --env-file "$ENV_FILE" up -d
