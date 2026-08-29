@@ -1,0 +1,148 @@
+name: Security Scans
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  bandit:
+    name: Bandit Scan
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run Bandit and Save Results
+        shell: bash
+        run: |
+          rm -rf /tmp/project3-bandit
+
+          {
+            echo "================================="
+            echo "Bandit Security Scan"
+            echo "================================="
+            echo
+
+            python3 -m venv /tmp/project3-bandit
+
+            /tmp/project3-bandit/bin/pip install bandit==1.9.4
+
+            echo
+            echo "----- Scan Results -----"
+            echo
+
+            /tmp/project3-bandit/bin/bandit \
+              -r Skills_Utilization
+
+            EXIT_CODE=$?
+
+            echo
+            echo "Bandit exit code: $EXIT_CODE"
+          } > bandit-results.txt 2>&1 || true
+
+          cat bandit-results.txt
+
+          exit 0
+
+      - name: Upload Bandit Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-results
+          path: bandit-results.txt
+
+
+  hadolint:
+    name: Hadolint Scan
+    needs: bandit
+    if: always()
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run Hadolint and Save Results
+        shell: bash
+        run: |
+          {
+            echo "================================="
+            echo "Hadolint Dockerfile Scan"
+            echo "================================="
+            echo
+
+            if [ -f Skills_Utilization/Dockerfile ]; then
+              docker run --rm -i \
+                hadolint/hadolint:v2.15.1 \
+                < Skills_Utilization/Dockerfile
+
+              EXIT_CODE=$?
+            else
+              echo "ERROR: Skills_Utilization/Dockerfile not found"
+              EXIT_CODE=1
+            fi
+
+            echo
+            echo "Hadolint exit code: $EXIT_CODE"
+          } > hadolint-results.txt 2>&1 || true
+
+          cat hadolint-results.txt
+
+          exit 0
+
+      - name: Upload Hadolint Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hadolint-results
+          path: hadolint-results.txt
+
+
+  trufflehog:
+    name: TruffleHog Scan
+    needs: hadolint
+    if: always()
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run TruffleHog and Save Results
+        shell: bash
+        run: |
+          {
+            echo "================================="
+            echo "TruffleHog Secret Scan"
+            echo "================================="
+            echo
+
+            docker run --rm \
+              -v "$PWD:/repo" \
+              trufflesecurity/trufflehog:latest \
+              git file:///repo \
+              --only-verified \
+              --no-update
+
+            EXIT_CODE=$?
+
+            echo
+            echo "TruffleHog exit code: $EXIT_CODE"
+          } > trufflehog-results.txt 2>&1 || true
+
+          cat trufflehog-results.txt
+
+          exit 0
+
+      - name: Upload TruffleHog Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trufflehog-results
+          path: trufflehog-results.txt
