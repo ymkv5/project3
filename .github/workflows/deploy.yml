@@ -61,9 +61,6 @@ jobs:
       - name: Deploy with Vault
         run: |
           cd /home/aau/Desktop/project3
+          docker compose down
           ./vault.sh
-
-      - name: Check Containers
-        run: |
-          cd /home/aau/Desktop/project3
-          docker compose ps
+          docker compose up -d 
